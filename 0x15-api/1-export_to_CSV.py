@@ -1,19 +1,3 @@
-PrincessRuth90
-/
-alx-system_engineering-devops
-Public
-Code
-Issues
-Pull requests
-Actions
-Projects
-Security
-Insights
-alx-system_engineering-devops/0x15-api/1-export_to_CSV.py
-@PrincessRuth90
-PrincessRuth90 API Task
- 1 contributor
-Executable File  38 lines (33 sloc)  1.21 KB
 #!/usr/bin/python3
 """
 Request from API; Return TODO list progress given employee ID

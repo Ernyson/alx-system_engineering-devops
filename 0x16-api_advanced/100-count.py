@@ -4,36 +4,13 @@
 import requests
 
 
-def sort_histogram(histogram={}):
-    '''Sorts and prints the given histogram.
-    '''
-    histogram = list(filter(lambda kv: kv[1], histogram))
-    histogram_dict = {}
-    for item in histogram:
-        if item[0] in histogram_dict:
-            histogram_dict[item[0]] += item[1]
-        else:
-            histogram_dict[item[0]] = item[1]
-    histogram = list(histogram_dict.items())
-    histogram.sort(
-        key=lambda kv: kv[0],
-        reverse=False
-    )
-    histogram.sort(
-        key=lambda kv: kv[1],
-        reverse=True
-    )
-    res_str = '\n'.join(list(map(
-        lambda kv: '{}: {}'.format(kv[0], kv[1]),
-        histogram
-    )))
-    if res_str:
-        print(res_str)
+BASE_URL = 'https://www.reddit.com'
+'''Reddit's base API URL.
+'''
 
 
-def count_words(subreddit, word_list, histogram=[], n=0, after=None):
-    '''Counts the number of times each word in a given wordlist
-    occurs in a given subreddit.
+def recurse(subreddit, hot_list=[], n=0, after=None):
+    '''Retrieves a list of hot posts from a given subreddit.
     '''
     api_headers = {
         'Accept': 'application/json',
@@ -49,7 +26,7 @@ def count_words(subreddit, word_list, histogram=[], n=0, after=None):
     limit = 30
     res = requests.get(
         '{}/r/{}/.json?sort={}&limit={}&count={}&after={}'.format(
-            'https://www.reddit.com',
+            BASE_URL,
             subreddit,
             sort,
             limit,
@@ -59,29 +36,14 @@ def count_words(subreddit, word_list, histogram=[], n=0, after=None):
         headers=api_headers,
         allow_redirects=False
     )
-    if not histogram:
-        word_list = list(map(lambda word: word.lower(), word_list))
-        histogram = list(map(lambda word: (word, 0), word_list))
     if res.status_code == 200:
         data = res.json()['data']
         posts = data['children']
-        titles = list(map(lambda post: post['data']['title'], posts))
-        histogram = list(map(
-            lambda kv: (kv[0], kv[1] + sum(list(map(
-                lambda txt: txt.lower().split().count(kv[0]),
-                titles
-            )))),
-            histogram
-        ))
-        if len(posts) >= limit and data['after']:
-            count_words(
-                subreddit,
-                word_list,
-                histogram,
-                n + len(posts),
-                data['after']
-            )
+        count = len(posts)
+        hot_list.extend(list(map(lambda x: x['data']['title'], posts)))
+        if count >= limit and data['after']:
+            return recurse(subreddit, hot_list, n + count, data['after'])
         else:
-            sort_histogram(histogram)
+            return hot_list if hot_list else None
     else:
-        return
+        return hot_list if hot_list else None
